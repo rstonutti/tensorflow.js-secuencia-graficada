@@ -3,65 +3,104 @@
   <head>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-vis"></script>
-    <script>
-      // Entradas.
-      const xs = tf.tensor([-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5]);
-      // Valor que toma para cada entrada.
-      const ys = tf.tensor([-12, -10, -8, -6, -4, -2, 0, 2, 4, 6, 8]);
-
-      // Creamos el modelo
-      const modelo = tf.sequential();
-
-      modelo.add(
-        tf.layers.dense({
-          inputShape: 1,
-          units: 1,
-        })
-      );
-
-      modelo.compile({
-        optimizer: "sgd",
-        loss: "meanSquaredError",
-      });
-
-      // Entrenamiento.
-      modelo
-        .fit(xs, ys, {
-          epochs: 300,
-        })
-        .then((history) => {
-          const incognitasTensor = tf.tensor([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-          const [...salida] = modelo.predict(incognitasTensor).dataSync();
-
-          console.log(salida);
-
-          salida.map((num, i) => {
-            console.log(
-              `Para ${
-                incognitasTensor.dataSync()[i]
-              } el resultado es ${Math.round(num)}`
-            );
-          });
-
-          salida.map((y, x) => ({ x, y }))
-
-          const resultados = salida.map((y, x) => ({ x, y }));
-
-          console.log(resultados);
-
-          const series = ["y=2x-2"];
-          const data = { values: [resultados], series };
-
-          const surface = { name: "Recta Lineal", tab: "Resultados" };
-          tfvis.render.linechart(surface, data);
-
-          // Limpiamos los tensores.
-          tf.dispose([xs, ys, modelo, salida, incognitasTensor]);
-        });
-    </script>
   </head>
-
   <body>
     <h1>Inspecciona el codigo!</h1>
+
+    <script>
+      const tensorFlow = async () => {
+        // Entradas.
+        const xs = tf.tensor([0, 1, 2, 3, 4, 5, 6, 7]);
+        // Valor que toma para cada entrada.
+        const ys = tf.tensor([-2, 0, 2, 4, 6, 8, 10, 12]);
+
+        // Creamos el modelo
+        const modelo = tf.sequential();
+
+        modelo.add(
+          tf.layers.dense({
+            inputShape: 1,
+            units: 1,
+          })
+        );
+
+        modelo.compile({
+          optimizer: "sgd",
+          loss: "meanSquaredError",
+        });
+
+        // Entrenamiento.
+        await modelo
+          .fit(xs, ys, {
+            epochs: 300,
+          })
+          .then((history) => {
+            const incognitasTensor = tf.tensor([
+              0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            ]);
+            const [...salida] = modelo.predict(incognitasTensor).dataSync();
+
+            console.log(salida);
+
+            salida.map((num, i) => {
+              console.log(
+                `Para ${
+                  incognitasTensor.dataSync()[i]
+                } el resultado es ${Math.round(num)}`
+              );
+            });
+
+            salida.map((y, x) => ({ x, y }));
+
+            const resultados = salida.map((y, x) => ({ x, y }));
+
+            console.log(resultados);
+
+            const series = ["y=2x-2"];
+            const data = { values: [resultados], series };
+
+            const surfaceRectaLineal = {
+              name: "Recta Lineal",
+              tab: "Resultados",
+            };
+
+            tfvis.render.linechart(surfaceRectaLineal, data);
+          });
+
+        const model = tf.sequential({
+          layers: [
+            tf.layers.dense({
+              inputShape: 1,
+              units: 1,
+              activation: "relu",
+            }),
+          ],
+        });
+
+        model.compile({
+          optimizer: "sgd",
+          loss: "meanSquaredError",
+          metrics: ["accuracy"],
+        });
+
+        function onBatchEnd(batch, logs) {
+          console.log("Accuracy", logs.acc);
+        }
+
+        const surfacePerdida = {
+          name: "Grafico De pérdida",
+          tab: "Grafico De pérdida",
+        };
+
+        // Train for 5 epochs with batch size of 32.
+        await model.fit(xs, ys, {
+          epochs: 10,
+          batchSize: 32,
+          callbacks: tfvis.show.fitCallbacks(surfacePerdida, ["loss", "acc"]),
+        });
+      };
+
+      document.addEventListener("DOMContentLoad", tensorFlow());
+    </script>
   </body>
 </html>
